@@ -1,20 +1,41 @@
-﻿using BankApp_Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BankApp_Repository.Repository.UnitofWork.Abstraction;
+using BankApp_Service.Abstractions;
 
 namespace BankApp_Service.Implementations
 {
-    public class UserService
+
+    public class UserService : IUserService
     {
-        User user = new User();
-        public void EditUserInfo(string email, string phoneNumber)
+        private readonly IUnitOfWork _unitOfWork;
+
+        public UserService(IUnitOfWork unitOfWork)
         {
+            _unitOfWork = unitOfWork;
+        }
+        public async Task<(bool status, string error)> UpdateUserInformation(int Id, string firstName, string lastName, string email, string phoneNumber)
+        {
+            var user = await _unitOfWork.UserRepository.GetUserByIdAsync(Id);
+            if (user == null)
+            {
+                return (false, "User not found.");
+            }
+
+            user.FirstName = firstName;
+            user.LastName = lastName;
             user.Email = email;
             user.PhoneNumber = phoneNumber;
-           
+
+            _unitOfWork.UserRepository.UpdateUser(user);
+            await _unitOfWork.SaveAsync();
+
+            return (true, "User information updated successfully.");
         }
+
+
     }
+
+
+
 }
+
+

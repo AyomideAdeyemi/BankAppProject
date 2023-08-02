@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\BankApp-Models\BankApp-Models.csproj" />
+    <ProjectReference Include="..\..\BankApp-Repository\BankApp-Repository.csproj" />
   </ItemGroup>
 
 </Project>

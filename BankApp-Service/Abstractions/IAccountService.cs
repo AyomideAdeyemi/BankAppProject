@@ -1,17 +1,17 @@
-﻿using BankApp_Models.Enum;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using BankApp_Models;
 
 namespace BankApp_Service.Abstractions
 {
     public interface IAccountService
     {
-        double GetBalance();
-        bool Withdraw(double amount);
-        bool Transfer(IAccountService toAccount, double amount);
-        AccountType AccountType { get; set; }
+        Task<(bool status, string error)> Transfer(string fromAccountNumber, string toAccountNumber, decimal amount, string description);
+        Task<(bool status, string error)> Deposit(string accountNumber, decimal amount, string description);
+        Task<(bool status, string error)> Withdraw(string accountNumber, decimal amount, string description);
+        Task<Account> GetAccountByAccountNumber(string accountNumber)
+
+
+
+;
+
     }
 }

@@ -1,64 +1,63 @@
 ﻿using BankApp_Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Transactions;
+using BankApp_Repository.Repository.UnitofWork.Abstraction;
+using BankApp_Service.Abstractions;
 
 namespace BankApp_Service.Implementations
 {
-    public class TransactionService
 
+    public class TransactionService : ITransactionService
     {
-        public TransactionService() 
-        {
+        private readonly IUnitOfWork _unitOfWork;
 
-        }
-        public void CreateTransaction(System.Transactions.Transaction transaction)
+        public TransactionService(IUnitOfWork unitOfWork)
         {
-            // Assuming Transaction class has a property to store the associated bank account number
-            var account = BankAccounts.Find(a => a.AccountNumber == transaction.AccountNumber);
-            if (account != null)
+            _unitOfWork = unitOfWork;
+        }
+
+        public async Task DeleteTransactionById(int id)
+        {
+            Transactions transaction = await _unitOfWork.TransactionRepository
+                .GetTransactionById(id);
+            _unitOfWork.TransactionRepository.Delete(transaction);
+            await _unitOfWork.SaveAsync();
+            _unitOfWork.Dispose();
+        }
+      
+
+        public async Task<IEnumerable<Transactions>> GetAllDailyTransactions(string date)
+        {
+            if (!DateTime.TryParse(date, out DateTime dateTime))
             {
-                // Add the transaction to the account's list of transactions
-                account.Transactions.Add(transaction);
+                return null;
             }
-            else
-            {
-                throw new ArgumentException("Invalid account number.");
-            }
+
+            DateOnly dateOnly = new DateOnly(dateTime.Year, dateTime.Month, dateTime.Day);
+            DateTime dateWithoutTime = dateOnly.ToDateTime(TimeOnly.MinValue);
+
+            return await _unitOfWork.TransactionRepository.GetDailyTransactions(dateWithoutTime);
         }
 
-        // Method to delete transactions
-        public void DeleteTransactions(List<Transaction> transactions)
+
+
+
+
+        public async Task<IEnumerable<Transactions>> GetAllTransactionsByAccountNumber(string accountNumber)
         {
-            foreach (var transaction in transactions)
-            {
-                // Assuming Transaction class has a property to store the associated bank account number
-                var account = BankAccounts.Find(a => a.AccountNumber == transaction.AccountNumber);
-                if (account != null)
-                {
-                    account.Transactions.Remove(transaction);
-                }
-            }
+            IEnumerable<Transactions> transactions = await _unitOfWork.TransactionRepository
+                .GetAllTransactionsByAccountNumber(accountNumber);
+            return transactions;
         }
 
-        // Method to search transactions by bank account
-        public List<Transaction> SearchTransactionsByAccount(BankAccount account)
+        public async Task<Transactions> GetTransactionById(int transactionId)
         {
-            // Assuming Transaction class has a property to store the associated bank account number
-            return account.Transactions;
+            Transactions transaction = await _unitOfWork.TransactionRepository
+                .GetTransactionById(transactionId);
+            return transaction;
+
         }
 
-        // Method to search transactions by date/keywords
-        public List<Transaction> SearchTransactionsByDateOrKeywords(DateTime date, string keywords)
-        {
-            // Assuming Transaction class has properties for Date and Description (for keywords)
-            return BankAccounts
-                .SelectMany(account => account.Transactions)
-                .Where(transaction => transaction.Date == date || transaction.Description.Contains(keywords))
-                .ToList();
-        }
+        
     }
+
 }
+    
